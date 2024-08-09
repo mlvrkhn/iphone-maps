@@ -25,7 +25,11 @@ import { ref } from 'vue';
 import Autocomplete from '@trevoreyre/autocomplete-vue';
 
 const city = ref('');
-const coordinates = ref(null);
+const coordinates = {
+	lat: null,
+	lng: null,
+};
+
 const mapId = ref('');
 const error = ref(null);
 
@@ -55,31 +59,28 @@ const getResultValue = result => {
 	return result.name;
 };
 
-const onSubmit = result => {
-	console.log('er: ', result);
+const onSubmit = async result => {
 	try {
 		const url = `https://api.mapbox.com/search/searchbox/v1/retrieve/${result.mapbox_id}?session_token=0f206044-3a78-42e1-8913-383ccd20b30b&access_token=pk.eyJ1IjoibWx2cmtobiIsImEiOiJjbHpsbzkzanMwM2kyMnJwbmo1dnhkZTlkIn0.eYXg3LX3YBuBLcY0Q6gMIQ`;
-		return new Promise(resolve => {
-			fetch(url)
-				.then(response => response.json())
-				.then(data => {
-					coordinates.value = {
-						lat: data.features[0].properties.coordinates.latitute,
-						lng: data.features[0].properties.coordinates.longitude,
-					};
-					resolve(data);
-					// resolve(data.features[0])?.properties.coordinates;
-				});
-			console.log(coordinates.value);
-		});
-	} catch (err) {
-		error.value = 'Error error';
-	}
 
-	// coordinates.value = {
-	//   lat: result.latlng.lat,
-	//   lng: result.latlng.lng,
-	// };
+		const response = await fetch(url);
+		const data = await response.json();
+
+		if (data) {
+			// Assuming the correct keys are latitude and longitude (not latitute)
+			coordinates.lat = data.features[0].properties.coordinates.latitude;
+			coordinates.lng = data.features[0].properties.coordinates.longitude;
+
+			// Resolve the coordinates or return the full data object
+			return coordinates;
+		} else {
+			throw new Error('Invalid data structure');
+		}
+	} catch (err) {
+		// Handle any errors that occur during the fetch or parsing
+		console.error('Error occurred:', err);
+		throw err; // Rethrow the error so that the caller can handle it
+	}
 };
 </script>
 
